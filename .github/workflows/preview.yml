@@ -8,8 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Configure GPG Key
-        run: echo "${{secrets.SIGNING_KEY}}" | base64 --decode > /tmp/keyring.gpg
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -19,7 +17,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
-        run: ./gradlew build --no-daemon -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password='${{secrets.SIGNING_KEY_PASSWORD}}' -Psigning.secretKeyRingFile=/tmp/keyring.gpg
+        run: ./gradlew build --no-daemon
       - name: Set variables
         id: vars
         run: echo ::set-output name=version::${GITHUB_REF#refs/*\/dev/}
@@ -32,22 +30,3 @@ jobs:
           files: |
             api/build/libs/*.jar
             platforms/*/build/libs/*(.jar|!(*-dev.jar*))
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure GPG Key
-        run: echo "${{secrets.SIGNING_KEY}}" | base64 --decode > /tmp/keyring.gpg
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: 17
-          distribution: zulu
-          cache: "gradle"
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-      - name: Publish with Gradle
-        run: ./gradlew publish --no-daemon -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password='${{secrets.SIGNING_KEY_PASSWORD}}' -Psigning.secretKeyRingFile=/tmp/keyring.gpg
-        env:
-          MAVEN_REPO_USER: ${{ secrets.MAVEN_REPO_USER }}
-          MAVEN_REPO_PASS: ${{ secrets.MAVEN_REPO_PASS }}
